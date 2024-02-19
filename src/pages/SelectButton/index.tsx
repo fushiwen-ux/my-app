@@ -1,16 +1,34 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
+import type { BaseSelectRef } from 'rc-select';
 import { Select } from 'antd';
 
 import './index.less';
 
 const { Option } = Select;
 
-const CustomSelect: React.FC = () => {
+interface CustomSelectProps {
+  options: { value: string; label: string }[];
+  placeholder?: string;
+  onChange?: (value: string[]) => void;
+  width?: string | number;
+  displayText?: string;
+}
+
+const CustomSelect: React.FC<CustomSelectProps> = ({
+  options,
+  onChange,
+  width = '200px',
+  displayText = 'Please select',
+}) => {
+  const selectRef = useRef<BaseSelectRef>(null);
   const [selectedCount, setSelectedCount] = useState(0);
   const [open, setOpen] = useState(false);
 
   const handleChange = (value: any) => {
     setSelectedCount(value.length);
+    if (onChange) {
+      onChange(value);
+    }
   };
 
   const handleBlur = () => {
@@ -26,24 +44,52 @@ const CustomSelect: React.FC = () => {
   };
 
   return (
-    <div className="custom-select" onClick={() => setOpen(!open)}>
+    <div
+      className="custom-select"
+      onClick={() => {
+        setOpen(true);
+        selectRef.current?.focus(); // 调用 focus 方法使 Select 组件获取焦点
+      }}
+      onBlur={() => setOpen(false)}
+      style={{ width, position: 'relative' }}>
       <Select
         mode="multiple"
-        style={{ width: '200px' }}
-        placeholder="Please select"
+        ref={selectRef}
+        style={{ width: '100%' }}
         onChange={handleChange}
         onBlur={handleBlur}
         onFocus={handleFocus}
         open={open}
         tagRender={handleTagRender}
         dropdownStyle={{ marginTop: 0 }}>
-        <Option value="option1">Option 1</Option>
-        <Option value="option2">Option 2</Option>
-        <Option value="option3">Option 3</Option>
-        {/* Add more options as needed */}
+        {options.map((option) => (
+          <Option key={option.value} value={option.value}>
+            {option.label}
+          </Option>
+        ))}
       </Select>
+      {selectedCount > 0 && (
+        <div
+          style={{
+            backgroundColor: '#f5222d',
+            color: '#fff',
+            boxShadow: 'none',
+            position: 'absolute',
+            top: '-10px',
+            right: '-10px',
+            borderRadius: '50%',
+            width: '20px',
+            height: '20px',
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            fontSize: '12px',
+          }}>
+          {selectedCount}
+        </div>
+      )}
       <div className="selected-count">
-        {selectedCount > 0 ? `Selected: ${selectedCount}` : 'Please select'}
+        <span>{displayText}</span>
       </div>
     </div>
   );
